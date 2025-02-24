@@ -1,21 +1,17 @@
+import { ChatCompletionMessage } from 'openai/resources/chat';
+
 export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
 }
 
 export interface ChatRequest {
-  messages: Message[];
+  messages: ChatCompletionMessage[];
 }
 
 export interface ChatResponse {
-  id: string;
-  choices: Array<{
-    message: Message;
-    finish_reason: string;
-  }>;
-  created: number;
-  model: string;
-  usage: {
+  message: ChatCompletionMessage;
+  usage?: {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
