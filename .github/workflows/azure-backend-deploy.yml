@@ -1,0 +1,115 @@
+name: Deploy Backend to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/azure-backend-deploy.yml'
+
+env:
+  AZURE_WEBAPP_NAME: customer-support-backend
+  NODE_VERSION: '18.x'
+  WORKING_DIRECTORY: backend
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Debug directory structure before setup
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          echo "Backend directory contents:"
+          ls -la backend || echo "Backend directory not found"
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Navigate to backend directory
+        run: |
+          cd backend
+          echo "Current directory after cd: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          echo "package.json contents:"
+          cat package.json
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          echo "Installing dependencies in: $(pwd)"
+          npm install
+
+      - name: Build TypeScript
+        run: |
+          cd backend
+          echo "Building in: $(pwd)"
+          npm run build
+
+      - name: Verify build output
+        run: |
+          cd backend
+          echo "Build directory contents:"
+          ls -la dist/ || echo "Dist directory not found"
+
+      - name: Create deployment package
+        run: |
+          cd backend
+          # Copy necessary files to dist
+          cp package.json dist/
+          cp package-lock.json dist/
+          # Create web.config for Azure
+          echo '<?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <system.webServer>
+              <handlers>
+                <add name="iisnode" path="server.js" verb="*" modules="iisnode"/>
+              </handlers>
+              <rewrite>
+                <rules>
+                  <rule name="NodeInspector" patternSyntax="ECMAScript" stopProcessing="true">
+                    <match url="^server.js\/debug[\/]?" />
+                  </rule>
+                  <rule name="StaticContent">
+                    <action type="Rewrite" url="public{REQUEST_URI}"/>
+                  </rule>
+                  <rule name="DynamicContent">
+                    <conditions>
+                      <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
+                    </conditions>
+                    <action type="Rewrite" url="server.js"/>
+                  </rule>
+                </rules>
+              </rewrite>
+              <security>
+                <requestFiltering>
+                  <hiddenSegments>
+                    <remove segment="bin"/>
+                  </hiddenSegments>
+                </requestFiltering>
+              </security>
+              <httpErrors existingResponse="PassThrough" />
+            </system.webServer>
+          </configuration>' > dist/web.config
+          
+          # Install production dependencies in dist
+          cd dist
+          npm install --production
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_BACKEND_PUBLISH_PROFILE }}
+          package: backend/dist 
