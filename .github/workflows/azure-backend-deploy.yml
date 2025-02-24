@@ -26,13 +26,15 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
         run: |
           cd backend
-          npm ci
+          if [ ! -f "package-lock.json" ]; then
+            npm install
+          else
+            npm ci
+          fi
 
       - name: Build backend
         run: |
@@ -44,7 +46,9 @@ jobs:
           cd backend
           # Copy necessary files to dist
           cp package.json dist/
-          cp package-lock.json dist/
+          if [ -f "package-lock.json" ]; then
+            cp package-lock.json dist/
+          fi
           # Create web.config for Azure
           cat > dist/web.config << 'EOL'
           <?xml version="1.0" encoding="utf-8"?>
@@ -83,7 +87,7 @@ jobs:
           
           # Install production dependencies in dist
           cd dist
-          npm ci --only=production
+          npm install --only=production
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
