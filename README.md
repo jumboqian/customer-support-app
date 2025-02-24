@@ -1,4 +1,4 @@
-# Customer Support LLM App
+# Customer Support App
 
 A modern customer support application powered by Azure OpenAI, built with React and Node.js.
 
@@ -14,19 +14,48 @@ A modern customer support application powered by Azure OpenAI, built with React 
 │   └── package.json
 ├── backend/           # Node.js Express backend
 │   ├── src/
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── middleware/
+│   │   ├── services/
+│   │   ├── types/
 │   │   └── server.ts
 │   └── package.json
 └── README.md
 ```
 
-## Prerequisites
+## Features
+
+- Real-time chat interface
+- Integration with Azure OpenAI
+- Modern, responsive design
+- TypeScript support
+- Error handling and loading states
+- Secure API integration
+
+## Tech Stack
+
+### Frontend
+- React
+- TypeScript
+- Modern CSS
+- Azure Web Apps deployment
+
+### Backend
+- Node.js
+- Express
+- TypeScript
+- Azure OpenAI
+- Azure Web Apps deployment
+
+## Getting Started
+
+### Prerequisites
 
 - Node.js (v14 or higher)
 - npm (v6 or higher)
 - Azure OpenAI Service account
 - Azure subscription
-
-## Setup
 
 ### Backend Setup
 
@@ -45,13 +74,7 @@ A modern customer support application powered by Azure OpenAI, built with React 
    cp .env.example .env
    ```
 
-4. Fill in your Azure OpenAI credentials in the `.env` file:
-   ```
-   PORT=3001
-   AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint
-   AZURE_OPENAI_KEY=your_azure_openai_key
-   AZURE_OPENAI_DEPLOYMENT_NAME=your_deployment_name
-   ```
+4. Fill in your Azure OpenAI credentials in the `.env` file.
 
 5. Start the development server:
    ```bash
@@ -82,19 +105,9 @@ A modern customer support application powered by Azure OpenAI, built with React 
 
 ## Deployment
 
-### Azure Deployment
-
-1. Create an Azure Web App Service for both frontend and backend
-2. Set up environment variables in Azure App Service Configuration
-3. Deploy using Azure CLI or GitHub Actions
-
-## Features
-
-- Real-time chat interface
-- Integration with Azure OpenAI
-- Modern, responsive design
-- TypeScript support
-- Error handling and loading states
+The application is deployed on Azure Web Apps:
+- Frontend: https://customer-support-frontend.azurewebsites.net
+- Backend: https://customer-support-backend.azurewebsites.net
 
 ## License
 
