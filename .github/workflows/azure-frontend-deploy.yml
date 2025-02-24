@@ -17,6 +17,9 @@ jobs:
   build-and-deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     
     steps:
       - uses: actions/checkout@v3
@@ -26,17 +29,34 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Debug directory contents
+        run: |
+          pwd
+          ls -la
+          echo "Current directory structure:"
+          tree -L 3 ..
+
       - name: Install dependencies
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: npm install
+        run: |
+          if [ -f "package.json" ]; then
+            npm install
+          else
+            echo "Error: package.json not found in $(pwd)"
+            exit 1
+          fi
 
       - name: Build
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: npm run build
+        run: |
+          if [ -f "package.json" ]; then
+            npm run build
+          else
+            echo "Error: package.json not found in $(pwd)"
+            exit 1
+          fi
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ${{ env.WORKING_DIRECTORY }}/build 
+          package: frontend/build 
