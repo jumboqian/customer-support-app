@@ -17,46 +17,54 @@ jobs:
   build-and-deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Debug directory structure
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          echo "Repository root contents:"
+          ls -la $GITHUB_WORKSPACE
+
+      - name: Verify frontend directory
+        run: |
+          if [ ! -d "$GITHUB_WORKSPACE/frontend" ]; then
+            echo "Error: frontend directory not found"
+            exit 1
+          fi
+          cd "$GITHUB_WORKSPACE/frontend"
+          if [ ! -f "package.json" ]; then
+            echo "Error: package.json not found in frontend directory"
+            exit 1
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Debug directory contents
-        run: |
-          pwd
-          ls -la
-          echo "Current directory structure:"
-          tree -L 3 ..
-
       - name: Install dependencies
-        run: |
-          if [ -f "package.json" ]; then
-            npm install
-          else
-            echo "Error: package.json not found in $(pwd)"
-            exit 1
-          fi
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm install
 
       - name: Build
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run build
+
+      - name: List build output
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          if [ -f "package.json" ]; then
-            npm run build
-          else
-            echo "Error: package.json not found in $(pwd)"
-            exit 1
-          fi
+          echo "Build directory contents:"
+          ls -la build/
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: frontend/build 
+          package: ${{ env.WORKING_DIRECTORY }}/build 
