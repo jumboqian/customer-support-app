@@ -7,11 +7,11 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/azure-frontend-deploy.yml'
+      - 'package.json'
 
 env:
   AZURE_WEBAPP_NAME: customer-support-frontend
   NODE_VERSION: '18.x'
-  WORKING_DIRECTORY: frontend
 
 jobs:
   build-and-deploy:
@@ -22,40 +22,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Debug directory structure before setup
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Directory contents:"
-          ls -la
-          echo "Frontend directory contents:"
-          ls -la frontend || echo "Frontend directory not found"
-          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Navigate to frontend directory
-        run: |
-          cd frontend
-          echo "Current directory after cd: $(pwd)"
-          echo "Directory contents:"
-          ls -la
-          echo "package.json contents:"
-          cat package.json
+      - name: Install root dependencies
+        run: npm install
 
-      - name: Install dependencies
-        run: |
-          cd frontend
-          echo "Installing dependencies in: $(pwd)"
-          npm install
-
-      - name: Build
-        run: |
-          cd frontend
-          echo "Building in: $(pwd)"
-          npm run build
+      - name: Build frontend
+        run: npm run build:frontend
 
       - name: Verify build output
         run: |
