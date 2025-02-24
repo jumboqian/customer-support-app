@@ -1,21 +1,16 @@
-name: Deploy Backend to Azure Web App
+name: Deploy to Azure Web Apps
 
 on:
   push:
     branches:
       - main
-    paths:
-      - 'backend/**'
-      - '.github/workflows/azure-backend-deploy.yml'
-      - 'package.json'
 
 env:
-  AZURE_WEBAPP_NAME: customer-support-backend
   NODE_VERSION: '18.x'
 
 jobs:
-  build-and-deploy:
-    name: Build and Deploy
+  deploy-frontend:
+    name: Deploy Frontend
     runs-on: ubuntu-latest
     
     steps:
@@ -27,14 +22,46 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install dependencies
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Deploy Frontend to Azure
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'customer-support-frontend'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: frontend/build
+
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install backend dependencies
         run: |
           cd backend
-          if [ ! -f "package-lock.json" ]; then
-            npm install
-          else
-            npm ci
-          fi
+          npm install
 
       - name: Build backend
         run: |
@@ -46,9 +73,7 @@ jobs:
           cd backend
           # Copy necessary files to dist
           cp package.json dist/
-          if [ -f "package-lock.json" ]; then
-            cp package-lock.json dist/
-          fi
+          cp package-lock.json dist/
           # Create web.config for Azure
           cat > dist/web.config << 'EOL'
           <?xml version="1.0" encoding="utf-8"?>
@@ -89,9 +114,9 @@ jobs:
           cd dist
           npm install --only=production
 
-      - name: Deploy to Azure Web App
+      - name: Deploy Backend to Azure
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          app-name: 'customer-support-backend'
           publish-profile: ${{ secrets.AZURE_BACKEND_PUBLISH_PROFILE }}
           package: backend/dist 
