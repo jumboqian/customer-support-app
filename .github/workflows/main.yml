@@ -73,7 +73,6 @@ jobs:
           cd backend
           # Copy necessary files to dist
           cp package.json dist/
-          cp package-lock.json dist/
           # Create web.config for Azure
           cat > dist/web.config << 'EOL'
           <?xml version="1.0" encoding="utf-8"?>
