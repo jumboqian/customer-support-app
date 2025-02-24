@@ -19,52 +19,53 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Debug directory structure
+      - name: Debug directory structure before setup
         run: |
           echo "Current directory: $(pwd)"
           echo "Directory contents:"
           ls -la
-          echo "Repository root contents:"
-          ls -la $GITHUB_WORKSPACE
-
-      - name: Verify frontend directory
-        run: |
-          if [ ! -d "$GITHUB_WORKSPACE/frontend" ]; then
-            echo "Error: frontend directory not found"
-            exit 1
-          fi
-          cd "$GITHUB_WORKSPACE/frontend"
-          if [ ! -f "package.json" ]; then
-            echo "Error: package.json not found in frontend directory"
-            exit 1
-          fi
+          echo "Frontend directory contents:"
+          ls -la frontend || echo "Frontend directory not found"
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Navigate to frontend directory
+        run: |
+          cd frontend
+          echo "Current directory after cd: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          echo "package.json contents:"
+          cat package.json
+
       - name: Install dependencies
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: npm install
+        run: |
+          cd frontend
+          echo "Installing dependencies in: $(pwd)"
+          npm install
 
       - name: Build
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: npm run build
-
-      - name: List build output
-        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
+          cd frontend
+          echo "Building in: $(pwd)"
+          npm run build
+
+      - name: Verify build output
+        run: |
+          cd frontend
           echo "Build directory contents:"
-          ls -la build/
+          ls -la build/ || echo "Build directory not found"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ${{ env.WORKING_DIRECTORY }}/build 
+          package: frontend/build 
