@@ -21,7 +21,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "postbuild": "cp web.config build/web.config"
+    "postbuild": "cp public/web.config build/web.config"
   },
   "eslintConfig": {
     "extends": [
